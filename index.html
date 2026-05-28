@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ferro-Silex Energy Systems — Thermal Energy Storage</title>
+<meta name="description" content="Ferro-Silex Energy Systems develops next-generation thermal energy storage technology for lunar survival, grid storage, and residential power independence.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Syncopate:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --amber: #C9860A; --amber-bright: #F0A820; --amber-deep: #7A3F00;
+    --gold: #E8C060; --coal: #0A0A08; --steel: #12120E; --charcoal: #1C1C16;
+    --ash: #2A2A20; --smoke: #3A3A2E; --fog: #6A6A58; --mist: #A0A088;
+    --cream: #E8E0C8; --white: #F5F0E8;
+  }
+  html { scroll-behavior: smooth; }
+  body { background: var(--coal); color: var(--cream); font-family: 'Cormorant Garamond', Georgia, serif; overflow-x: hidden; cursor: none; }
+
+  .cursor { width: 8px; height: 8px; background: var(--amber-bright); border-radius: 50%; position: fixed; pointer-events: none; z-index: 9999; transform: translate(-50%,-50%); transition: width .2s,height .2s; mix-blend-mode: screen; }
+  .cursor-ring { width: 32px; height: 32px; border: 1px solid var(--amber); border-radius: 50%; position: fixed; pointer-events: none; z-index: 9998; transform: translate(-50%,-50%); transition: width .3s,height .3s; opacity: .6; }
+
+  #plasma-canvas { position: fixed; top:0; left:0; width:100%; height:100%; z-index:0; opacity:.18; pointer-events:none; }
+
+  body::after { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E"); opacity:.04; pointer-events:none; z-index:1; }
+
+  nav { position:fixed; top:0; left:0; right:0; z-index:100; padding:1.5rem 3rem; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(201,134,10,.1); background:linear-gradient(to bottom,rgba(10,10,8,.9),transparent); backdrop-filter:blur(2px); }
+  .nav-logo { font-family:'Syncopate',sans-serif; font-size:.7rem; font-weight:700; letter-spacing:.2em; color:var(--amber-bright); text-transform:uppercase; }
+  .nav-logo span { color:var(--fog); font-weight:400; }
+  .nav-links { display:flex; gap:2.5rem; list-style:none; }
+  .nav-links a { font-family:'Share Tech Mono',monospace; font-size:.7rem; letter-spacing:.15em; color:var(--fog); text-decoration:none; text-transform:uppercase; transition:color .3s; }
+  .nav-links a:hover { color:var(--amber-bright); }
+
+  #hero { position:relative; z-index:2; min-height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:flex-start; padding:0 8vw; overflow:hidden; }
+  .hero-eyebrow { font-family:'Share Tech Mono',monospace; font-size:.65rem; letter-spacing:.3em; color:var(--amber); text-transform:uppercase; margin-bottom:1.5rem; opacity:0; animation:fadeUp 1s .3s forwards; }
+  .hero-eyebrow::before { content:''; display:inline-block; width:2rem; height:1px; background:var(--amber); vertical-align:middle; margin-right:.75rem; }
+  .hero-title { font-family:'Cormorant Garamond',serif; font-size:clamp(3.5rem,8vw,7.5rem); font-weight:300; line-height:.95; letter-spacing:-.02em; color:var(--white); opacity:0; animation:fadeUp 1s .5s forwards; }
+  .hero-title .accent { color:var(--amber-bright); font-style:italic; }
+  .hero-title .thin { font-weight:300; color:var(--mist); }
+  .hero-subtitle { font-family:'Cormorant Garamond',serif; font-size:clamp(1rem,2vw,1.35rem); font-weight:300; font-style:italic; color:var(--fog); max-width:42rem; line-height:1.6; margin-top:1.5rem; margin-bottom:3rem; opacity:0; animation:fadeUp 1s .7s forwards; }
+  .hero-cta { display:flex; gap:1.5rem; align-items:center; opacity:0; animation:fadeUp 1s .9s forwards; }
+  .btn-primary { font-family:'Share Tech Mono',monospace; font-size:.7rem; letter-spacing:.2em; text-transform:uppercase; color:var(--coal); background:var(--amber-bright); padding:.9rem 2.2rem; text-decoration:none; transition:background .3s,transform .2s; clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%); }
+  .btn-primary:hover { background:var(--gold); transform:translateY(-2px); }
+  .btn-secondary { font-family:'Share Tech Mono',monospace; font-size:.7rem; letter-spacing:.2em; text-transform:uppercase; color:var(--amber); text-decoration:none; border-bottom:1px solid var(--amber-deep); padding-bottom:2px; transition:color .3s,border-color .3s; }
+  .btn-secondary:hover { color:var(--amber-bright); border-color:var(--amber-bright); }
+
+  .hero-hud { position:absolute; right:8vw; bottom:12vh; text-align:right; opacity:0; animation:fadeIn 2s 1.5s forwards; }
+  .hud-temp { font-family:'Share Tech Mono',monospace; font-size:4rem; color:var(--amber-bright); line-height:1; text-shadow:0 0 40px rgba(240,168,32,.4); animation:tempFlicker 4s ease-in-out infinite; }
+  .hud-unit { font-size:1.5rem; color:var(--amber); vertical-align:super; }
+  .hud-label { font-family:'Share Tech Mono',monospace; font-size:.6rem; letter-spacing:.25em; color:var(--fog); text-transform:uppercase; margin-top:.25rem; }
+  .hud-row { font-family:'Share Tech Mono',monospace; font-size:.6rem; letter-spacing:.2em; color:var(--smoke); margin-top:.4rem; }
+
+  .scroll-indicator { position:absolute; bottom:3rem; left:8vw; display:flex; align-items:center; gap:.75rem; opacity:0; animation:fadeIn 2s 2s forwards; }
+  .scroll-line { width:1px; height:3rem; background:linear-gradient(to bottom,var(--amber),transparent); animation:scrollPulse 2s ease-in-out infinite; }
+  .scroll-text { font-family:'Share Tech Mono',monospace; font-size:.55rem; letter-spacing:.3em; color:var(--fog); text-transform:uppercase; writing-mode:vertical-rl; }
+
+  section { position:relative; z-index:2; padding:8rem 8vw; }
+  .section-label { font-family:'Share Tech Mono',monospace; font-size:.6rem; letter-spacing:.35em; color:var(--amber); text-transform:uppercase; margin-bottom:1rem; display:flex; align-items:center; gap:.75rem; }
+  .section-label::after { content:''; flex:1; max-width:3rem; height:1px; background:var(--amber-deep); }
+  .divider { position:relative; z-index:2; height:1px; background:linear-gradient(to right,transparent,var(--amber-deep),transparent); margin:0 8vw; }
+
+  #credentials { padding:4rem 8vw; background:var(--charcoal); border-top:1px solid var(--ash); border-bottom:1px solid var(--ash); }
+  .credentials-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:2rem; text-align:center; }
+  .cred-value { font-family:'Cormorant Garamond',serif; font-size:2.5rem; font-weight:300; color:var(--amber-bright); line-height:1; }
+  .cred-label { font-family:'Share Tech Mono',monospace; font-size:.58rem; letter-spacing:.2em; color:var(--fog); text-transform:uppercase; margin-top:.5rem; }
+
+  #mission { background:linear-gradient(to bottom,transparent,rgba(18,18,14,.8),transparent); }
+  .mission-grid { display:grid; grid-template-columns:1fr 1fr; gap:6rem; align-items:start; margin-top:3rem; }
+  .mission-statement { font-size:clamp(1.8rem,3vw,2.8rem); font-weight:300; line-height:1.25; color:var(--white); }
+  .mission-statement em { color:var(--amber-bright); font-style:italic; }
+  .mission-body { font-size:1.05rem; font-weight:300; line-height:1.85; color:var(--mist); padding-top:.5rem; }
+  .mission-body p+p { margin-top:1.25rem; }
+
+  .tech-header { max-width:52rem; margin-bottom:5rem; }
+  .tech-title { font-size:clamp(2.5rem,5vw,4.5rem); font-weight:300; line-height:1.1; color:var(--white); margin-top:1rem; }
+  .tech-title .line2 { color:var(--amber-bright); font-style:italic; }
+  .tech-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--ash); border:1px solid var(--ash); }
+  .tech-card { background:var(--steel); padding:2.5rem 2rem; position:relative; overflow:hidden; transition:background .4s; }
+  .tech-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(to right,transparent,var(--amber),transparent); opacity:0; transition:opacity .4s; }
+  .tech-card:hover { background:var(--charcoal); }
+  .tech-card:hover::before { opacity:1; }
+  .tech-card-num { font-family:'Share Tech Mono',monospace; font-size:.6rem; letter-spacing:.2em; color:var(--smoke); margin-bottom:1.5rem; }
+  .tech-card-title { font-family:'Cormorant Garamond',serif; font-size:1.35rem; font-weight:600; color:var(--amber-bright); margin-bottom:.75rem; }
+  .tech-card-body { font-size:.92rem; font-weight:300; line-height:1.75; color:var(--fog); }
+  .tech-card-stat { margin-top:1.5rem; padding-top:1.5rem; border-top:1px solid var(--ash); font-family:'Share Tech Mono',monospace; font-size:1.4rem; color:var(--amber); }
+  .tech-card-stat-label { font-family:'Share Tech Mono',monospace; font-size:.55rem; letter-spacing:.2em; color:var(--smoke); text-transform:uppercase; margin-top:.2rem; }
+
+  #layers { padding:6rem 8vw; background:rgba(12,12,10,.6); }
+  .layer-title { font-size:clamp(2rem,4vw,3.5rem); font-weight:300; color:var(--white); margin-top:1rem; margin-bottom:4rem; }
+  .layer-stack { display:flex; flex-direction:column; max-width:56rem; }
+  .layer-row { display:grid; grid-template-columns:3rem 1fr 1fr; gap:1.5rem; align-items:center; padding:1rem 1.5rem; border-left:2px solid var(--ash); transition:border-color .3s,background .3s; cursor:default; }
+  .layer-row:hover { border-left-color:var(--amber); background:rgba(201,134,10,.04); }
+  .layer-row:hover .layer-num { color:var(--amber-bright); }
+  .layer-num { font-family:'Share Tech Mono',monospace; font-size:.65rem; color:var(--smoke); transition:color .3s; }
+  .layer-name { font-family:'Cormorant Garamond',serif; font-size:1.05rem; font-weight:600; color:var(--cream); }
+  .layer-desc { font-family:'Share Tech Mono',monospace; font-size:.65rem; letter-spacing:.05em; color:var(--fog); }
+
+  #markets { padding:8rem 8vw; }
+  .markets-title { font-size:clamp(2.5rem,5vw,4rem); font-weight:300; color:var(--white); margin-top:1rem; margin-bottom:5rem; max-width:40rem; line-height:1.1; }
+  .markets-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:2rem; }
+  .market-card { padding:2.5rem; border:1px solid var(--ash); position:relative; overflow:hidden; transition:border-color .4s; }
+  .market-card::after { content:''; position:absolute; bottom:0; left:0; width:100%; height:2px; background:var(--amber); transform:scaleX(0); transform-origin:left; transition:transform .4s; }
+  .market-card:hover { border-color:var(--amber-deep); }
+  .market-card:hover::after { transform:scaleX(1); }
+  .market-icon { font-family:'Share Tech Mono',monospace; font-size:1.8rem; color:var(--amber-deep); margin-bottom:1.5rem; }
+  .market-name { font-family:'Cormorant Garamond',serif; font-size:1.5rem; font-weight:600; color:var(--amber-bright); margin-bottom:.5rem; }
+  .market-tagline { font-family:'Share Tech Mono',monospace; font-size:.6rem; letter-spacing:.15em; color:var(--fog); text-transform:uppercase; margin-bottom:1.25rem; }
+  .market-body { font-size:.95rem; font-weight:300; line-height:1.75; color:var(--mist); }
+
+  #contact { padding:10rem 8vw; text-align:center; position:relative; }
+  .contact-glow { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:40vw; height:40vw; background:radial-gradient(circle,rgba(201,134,10,.08) 0%,transparent 70%); pointer-events:none; }
+  .contact-title { font-size:clamp(2.5rem,6vw,5.5rem); font-weight:300; color:var(--white); line-height:1.05; margin-bottom:1.5rem; }
+  .contact-title em { color:var(--amber-bright); font-style:italic; display:block; }
+  .contact-sub { font-size:1.05rem; font-weight:300; font-style:italic; color:var(--fog); margin-bottom:3rem; max-width:36rem; margin-left:auto; margin-right:auto; line-height:1.7; }
+  .contact-email { font-family:'Share Tech Mono',monospace; font-size:1rem; letter-spacing:.1em; color:var(--amber-bright); text-decoration:none; border-bottom:1px solid var(--amber-deep); padding-bottom:3px; transition:color .3s,border-color .3s; }
+  .contact-email:hover { color:var(--gold); border-color:var(--gold); }
+  .contact-note { font-family:'Share Tech Mono',monospace; font-size:.6rem; letter-spacing:.2em; color:var(--smoke); text-transform:uppercase; margin-top:3rem; }
+
+  footer { position:relative; z-index:2; padding:2rem 8vw; border-top:1px solid var(--ash); display:flex; justify-content:space-between; align-items:center; }
+  .footer-logo { font-family:'Syncopate',sans-serif; font-size:.6rem; letter-spacing:.2em; color:var(--smoke); text-transform:uppercase; }
+  .footer-copy { font-family:'Share Tech Mono',monospace; font-size:.6rem; letter-spacing:.1em; color:var(--smoke); }
+  .footer-patent { font-family:'Share Tech Mono',monospace; font-size:.6rem; letter-spacing:.1em; color:var(--amber-deep); }
+
+  .reveal { opacity:0; transform:translateY(30px); transition:opacity .8s ease,transform .8s ease; }
+  .reveal.visible { opacity:1; transform:translateY(0); }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  @keyframes scrollPulse { 0%,100%{opacity:1;transform:scaleY(1)} 50%{opacity:.3;transform:scaleY(.6)} }
+  @keyframes tempFlicker { 0%,100%{opacity:1} 92%{opacity:1} 93%{opacity:.7} 94%{opacity:1} }
+
+  @media(max-width:900px){
+    nav{padding:1rem 1.5rem} .nav-links{display:none}
+    section{padding:5rem 6vw}
+    .mission-grid,.tech-cards,.markets-grid{grid-template-columns:1fr}
+    .credentials-grid{grid-template-columns:repeat(2,1fr)}
+    .hero-hud{display:none}
+    footer{flex-direction:column;gap:.75rem;text-align:center}
+    .layer-row{grid-template-columns:2rem 1fr}
+    .layer-desc{display:none}
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursor-ring"></div>
+<canvas id="plasma-canvas"></canvas>
+
+<nav>
+  <div class="nav-logo">Ferro-Silex <span>Energy Systems</span></div>
+  <ul class="nav-links">
+    <li><a href="#mission">Mission</a></li>
+    <li><a href="#technology">Technology</a></li>
+    <li><a href="#markets">Markets</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<section id="hero">
+  <p class="hero-eyebrow">Ferro-Silex Energy Systems LLC — Est. 2026</p>
+  <h1 class="hero-title">
+    The Rock<br>
+    <span class="accent">That Powers</span><br>
+    <span class="thin">The Moon.</span>
+  </h1>
+  <p class="hero-subtitle">
+    Silicon at 2,000°C, sealed in rhenium, suspended in vacuum.
+    A thermal battery that outlasts the lunar night — and redefines energy storage on Earth.
+  </p>
+  <div class="hero-cta">
+    <a href="#technology" class="btn-primary">The Technology</a>
+    <a href="#contact" class="btn-secondary">Get in Touch</a>
+  </div>
+  <div class="hero-hud">
+    <div class="hud-temp">2,000<span class="hud-unit">°C</span></div>
+    <div class="hud-label">Core operating temperature</div>
+    <div class="hud-row">354h — Discharge duration</div>
+    <div class="hud-row">0 — Moving parts</div>
+    <div class="hud-row">US Prov. Patent Pending</div>
+  </div>
+  <div class="scroll-indicator">
+    <div class="scroll-line"></div>
+    <span class="scroll-text">Scroll</span>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="credentials">
+  <div class="credentials-grid">
+    <div class="cred-item reveal"><div class="cred-value">2,000°</div><div class="cred-label">Core temperature (°C)</div></div>
+    <div class="cred-item reveal"><div class="cred-value">354h</div><div class="cred-label">Discharge duration</div></div>
+    <div class="cred-item reveal"><div class="cred-value">1,200+</div><div class="cred-label">Wh/kg specific energy</div></div>
+    <div class="cred-item reveal"><div class="cred-value">Zero</div><div class="cred-label">Moving parts</div></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="mission">
+  <p class="section-label reveal">Our Mission</p>
+  <div class="mission-grid">
+    <div class="reveal">
+      <h2 class="mission-statement">Energy stored as <em>heat</em> — not chemistry. Not combustion. Not radiation.</h2>
+    </div>
+    <div class="reveal">
+      <div class="mission-body">
+        <p>Ferro-Silex Energy Systems is developing the FSC-6.3 Titan — a non-nuclear thermal energy storage platform built for the most demanding environment humans have ever attempted to inhabit: the surface of the Moon.</p>
+        <p>Where lithium batteries fail in extreme cold, where solar panels go dark for 14 days, where radioactive payloads require years of regulatory clearance — the Titan operates. Silently. Without moving parts. Without toxic chemistry. Without fear of fire.</p>
+        <p>The same platform that survives the lunar night will power the homes and highways of Earth. One technology. Three markets. Unlimited potential.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="technology">
+  <p class="section-label reveal">The Technology</p>
+  <div class="tech-header reveal">
+    <h2 class="tech-title">FSC-6.3 Titan<br><span class="line2">Thermal Energy Platform</span></h2>
+  </div>
+  <div class="tech-cards">
+    <div class="tech-card reveal">
+      <div class="tech-card-num">01 — Core</div>
+      <div class="tech-card-title">Yolk-Shell Silicon-28</div>
+      <div class="tech-card-body">Isotopically pure Silicon-28 micro-encapsulated in 150-micron Rhenium ALD shells, suspended in an isostatic graphite honeycomb matrix. At 2,000°C, silicon stores 1,787 kJ/kg of latent heat — energy released with perfect consistency across hundreds of charge cycles.</div>
+      <div class="tech-card-stat">1,787 kJ/kg</div>
+      <div class="tech-card-stat-label">Latent heat capacity</div>
+    </div>
+    <div class="tech-card reveal">
+      <div class="tech-card-num">02 — Conversion</div>
+      <div class="tech-card-title">Rad-Hard TPV Array</div>
+      <div class="tech-card-body">Gallium Antimonide III-V semiconductor cells convert core radiation directly to electricity at &gt;40% theoretical efficiency. Zero moving parts. Radiation-hardened for a decade of lunar surface exposure. Power output degrades less than 4% over a 10-year mission lifecycle.</div>
+      <div class="tech-card-stat">&gt;40%</div>
+      <div class="tech-card-stat-label">Conversion efficiency</div>
+    </div>
+    <div class="tech-card reveal">
+      <div class="tech-card-num">03 — Containment</div>
+      <div class="tech-card-title">10-Layer Architecture</div>
+      <div class="tech-card-body">Rhenium-HfC diffusion barrier. Ultra-high vacuum gap. 40-layer W/Rh MLI stack. Kinematic HfC standoff pin suspension. Grade-5 Titanium pressure vessel. Kevlar-Nextel Whipple shield. ITO-coated alumina exterior. A system designed to operate without maintenance for 10 years.</div>
+      <div class="tech-card-stat">10 yrs</div>
+      <div class="tech-card-stat-label">Design mission life</div>
+    </div>
+  </div>
+</section>
+
+<section id="layers">
+  <p class="section-label reveal">System Architecture</p>
+  <h3 class="layer-title reveal">The 10-Layer Cross Section</h3>
+  <div class="layer-stack">
+    <div class="layer-row reveal"><span class="layer-num">01</span><span class="layer-name">Isostatic Graphite Core</span><span class="layer-desc">Si-28 nanoparticles · R = 150mm</span></div>
+    <div class="layer-row reveal"><span class="layer-num">02</span><span class="layer-name">Argon Zone + HfC Pins</span><span class="layer-desc">0.5 bar Ar · 18 kinematic standoff pins</span></div>
+    <div class="layer-row reveal"><span class="layer-num">03</span><span class="layer-name">Ti-2 Inner Shell</span><span class="layer-desc">Grade 5 Ti · 3mm · Ta bellows</span></div>
+    <div class="layer-row reveal"><span class="layer-num">04</span><span class="layer-name">Vacuum Gap A — Primary UHV</span><span class="layer-desc">10⁻⁸ Torr · Mo bias grid · 40mm</span></div>
+    <div class="layer-row reveal"><span class="layer-num">05</span><span class="layer-name">W/Rh MLI Stack</span><span class="layer-desc">40-layer tungsten-rhodium foil · 10mm</span></div>
+    <div class="layer-row reveal"><span class="layer-num">06</span><span class="layer-name">GaSb TPV Array</span><span class="layer-desc">III-V cells · Zr getter strips · 5mm</span></div>
+    <div class="layer-row reveal"><span class="layer-num">07</span><span class="layer-name">OFHC Induction Coil + h-BN</span><span class="layer-desc">1MW rated · hexagonal BN interface</span></div>
+    <div class="layer-row reveal"><span class="layer-num">08</span><span class="layer-name">Ti-1 Outer Hull</span><span class="layer-desc">Grade 5 Ti · 5mm · primary structure</span></div>
+    <div class="layer-row reveal"><span class="layer-num">09</span><span class="layer-name">Whipple Shield + Aerogel</span><span class="layer-desc">Kevlar/Nextel · silica-titania aerogel</span></div>
+    <div class="layer-row reveal"><span class="layer-num">10</span><span class="layer-name">ITO-Alumina Exterior Armor</span><span class="layer-desc">Anti-static · dust-repelling · seamless</span></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="markets">
+  <p class="section-label reveal">Applications</p>
+  <h2 class="markets-title reveal">One platform.<br>Three frontiers.</h2>
+  <div class="markets-grid">
+    <div class="market-card reveal">
+      <div class="market-icon">◎</div>
+      <div class="market-name">Lunar Surface</div>
+      <div class="market-tagline">Primary Application · NASA Artemis</div>
+      <div class="market-body">354-hour discharge covers the full 14-day lunar night. Zero radioactive materials. No regulatory burden at Kennedy Space Center. Compatible with all current and projected Artemis power infrastructure. Patent-pending non-nuclear alternative to RTGs and kilopower reactors.</div>
+    </div>
+    <div class="market-card reveal">
+      <div class="market-icon">⌂</div>
+      <div class="market-name">Residential Storage</div>
+      <div class="market-tagline">Near-Term · Home Energy Independence</div>
+      <div class="market-body">One oil-drum-sized unit replaces five Powerwalls and also heats your home. No lithium. No thermal runaway. No fire risk. 14+ days of backup power and heat from a sealed ceramic vessel. The safe alternative to chemical battery storage.</div>
+    </div>
+    <div class="market-card reveal">
+      <div class="market-icon">▶</div>
+      <div class="market-name">Heavy Transport</div>
+      <div class="market-tagline">Future · Long-Haul Electrification</div>
+      <div class="market-body">Semi-truck electrification is unsolved. Batteries heavy enough for 500-mile range destroy payload economics. The Titan's exceptional energy density opens a path to long-haul freight that lithium cannot reach. Four units fit side-by-side in a standard trailer.</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<section id="contact">
+  <div class="contact-glow"></div>
+  <h2 class="contact-title reveal">Let's build<br><em>the future.</em></h2>
+  <p class="contact-sub reveal">Ferro-Silex Energy Systems is actively seeking research partnerships, NASA SBIR collaboration, and technical feedback from the scientific community.</p>
+  <a href="mailto:sethsoileau@ferrosilexenergy.com" class="contact-email reveal">sethsoileau@ferrosilexenergy.com</a>
+  <p class="contact-note reveal">US Provisional Patent Pending · Florida, USA · Est. May 2026</p>
+</section>
+
+<footer>
+  <div class="footer-logo">Ferro-Silex Energy Systems LLC</div>
+  <div class="footer-copy">© 2026 Ferro-Silex Energy Systems LLC</div>
+  <div class="footer-patent">US Provisional Patent Pending</div>
+</footer>
+
+<script>
+// Custom cursor
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursor-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{
+  mx=e.clientX; my=e.clientY;
+  cursor.style.left=mx+'px'; cursor.style.top=my+'px';
+});
+(function animateRing(){
+  rx+=(mx-rx)*.12; ry+=(my-ry)*.12;
+  ring.style.left=rx+'px'; ring.style.top=ry+'px';
+  requestAnimationFrame(animateRing);
+})();
+document.querySelectorAll('a,button').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cursor.style.width='16px';cursor.style.height='16px';ring.style.width='48px';ring.style.height='48px';});
+  el.addEventListener('mouseleave',()=>{cursor.style.width='8px';cursor.style.height='8px';ring.style.width='32px';ring.style.height='32px';});
+});
+
+// Plasma canvas
+const canvas=document.getElementById('plasma-canvas');
+const ctx=canvas.getContext('2d');
+let W,H,t=0,scrollY=0;
+function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
+resize();
+window.addEventListener('resize',resize);
+window.addEventListener('scroll',()=>{scrollY=window.scrollY;});
+
+function plasma(){
+  const img=ctx.createImageData(W,H);
+  const d=img.data;
+  const sc=scrollY*.0005;
+  for(let y=0;y<H;y+=2){
+    for(let x=0;x<W;x+=2){
+      const nx=x/W, ny=y/H;
+      const v1=Math.sin(nx*8+t);
+      const v2=Math.sin(ny*6+t*.7);
+      const v3=Math.sin((nx+ny)*5+t*1.3);
+      const v4=Math.sin(Math.sqrt((nx-.5)*(nx-.5)*16+(ny-.5)*(ny-.5)*16)*8-t*.9+sc*4);
+      const v=(v1+v2+v3+v4)/4;
+      const n=(v+1)/2;
+      let r,g,b;
+      if(n<.25){r=Math.floor(n*4*80);g=Math.floor(n*4*20);b=0;}
+      else if(n<.5){const t2=(n-.25)*4;r=Math.floor(80+t2*150);g=Math.floor(20+t2*100);b=0;}
+      else if(n<.75){const t2=(n-.5)*4;r=Math.floor(230+t2*25);g=Math.floor(120+t2*80);b=Math.floor(t2*30);}
+      else{const t2=(n-.75)*4;r=255;g=Math.floor(200+t2*55);b=Math.floor(30+t2*225);}
+      for(let dy=0;dy<2&&y+dy<H;dy++){
+        for(let dx=0;dx<2&&x+dx<W;dx++){
+          const i=((y+dy)*W+(x+dx))*4;
+          d[i]=r;d[i+1]=g;d[i+2]=b;d[i+3]=255;
+        }
+      }
+    }
+  }
+  ctx.putImageData(img,0,0);
+  t+=.012;
+  requestAnimationFrame(plasma);
+}
+plasma();
+
+// Scroll reveal
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach((entry,i)=>{
+    if(entry.isIntersecting){
+      setTimeout(()=>entry.target.classList.add('visible'),i*60);
+      observer.unobserve(entry.target);
+    }
+  });
+},{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+
+// Smooth nav
+document.querySelectorAll('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click',e=>{
+    e.preventDefault();
+    document.querySelector(a.getAttribute('href'))?.scrollIntoView({behavior:'smooth'});
+  });
+});
+</script>
+</body>
+</html>
